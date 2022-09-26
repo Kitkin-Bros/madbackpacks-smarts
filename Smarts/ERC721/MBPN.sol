@@ -29,7 +29,7 @@ contract MBPN is ERC721, ERC721Burnable, Ownable {
     }
     
     /**
-     * @dev Mint with provided IERC20 token and price which was specified during deploy
+     * @dev Mint with provided IERC20 token and cost which was specified during deploy
      */
     function safeMint(address to) public {
          _payToken.transferFrom(msg.sender, address(this), _cost);
