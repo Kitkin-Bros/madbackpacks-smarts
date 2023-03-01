@@ -60,16 +60,22 @@ contract MBPVP {
     }
 
     function removeBet(uint _betId) public onlyOwner {
+        require(_betId > 0, "Wrong betId");
         require(bets[_betId].resolved == true, "Bet is not resolved");
 
         delete bets[_betId];
+    }
+
+    function getBetStatus(uint256 _betId) public view returns (bool, bool) {
+        require(_betId > 0, "Wrong betId"); 
+        require(bets[_betId].betId > 0, "Bet with this id does not exists");
+        return (bets[_betId].player1Paid, bets[_betId].player2Paid);
     }
 
     function changeOwner(address payable _newOwnerAddress) external onlyOwner {
         require(msg.sender == ownerAddress, "Only the owner can call this function");
         ownerAddress = _newOwnerAddress;
     }
-
     
     modifier onlyOwner() {
         require(msg.sender == ownerAddress, "Only the contract owner can call this function");
