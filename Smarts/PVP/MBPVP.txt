@@ -1,0 +1,66 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.4;
+
+contract BetContract {
+    
+    struct Bet {
+        uint id;
+        address payable payer1;
+        address payable payer2;
+        uint amount;
+        bool paid1;
+        bool paid2;
+    }
+    
+    address payable public payee; // Address that will receive the payments
+    mapping(uint => Bet) public bets; // Map of bets
+    
+    uint public nextId = 1; // Next id to be assigned
+    
+    function createBet(address payable _payer1, address payable _payer2, uint _amount) public {
+        bets[nextId] = Bet(nextId, _payer1, _payer2, _amount, false, false);
+        nextId++;
+    }
+    
+    function makePayment(uint _id) public payable {
+        Bet storage bet = bets[_id];
+        require(!bet.paid1 && !bet.paid2, "Bet has already been paid");
+        require(msg.value == bet.amount, "Incorrect payment amount");
+        
+        if (msg.sender == bet.payer1) {
+            bet.paid1 = true;
+        } else if (msg.sender == bet.payer2) {
+            bet.paid2 = true;
+        } else {
+            revert("Only payer can make payment");
+        }
+        
+        if (bet.paid1 && bet.paid2) {
+            // Decide which payer to pay
+            if (block.timestamp % 2 == 0) {
+                payee.transfer(bet.amount);
+                bet.payer1.transfer(bet.amount / 2);
+                bet.payer2.transfer(bet.amount / 2);
+            } else {
+                payee.transfer(bet.amount);
+                bet.payer2.transfer(bet.amount / 2);
+                bet.payer1.transfer(bet.amount / 2);
+            }
+        }
+    }
+    
+    function requestRefund(uint _id) public {
+        Bet storage bet = bets[_id];
+        require((msg.sender == bet.payer1 && !bet.paid2) || (msg.sender == bet.payer2 && !bet.paid1), "Only one payer can request refund");
+        
+        bet.paid1 = false;
+        bet.paid2 = false;
+        payable(msg.sender).transfer(bet.amount);
+    }
+    
+    function setPayee(address payable _payee) public {
+        require(payee == address(0), "Payee address has already been set");
+        payee = _payee;
+    }
+}
